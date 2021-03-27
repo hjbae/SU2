@@ -2,14 +2,14 @@
  * \file CNEMOTurbSASolver.cpp
  * \brief Main subrotuines of CNEMOTurbSASolver class
  * \author F. Palacios, A. Bueno, W. Maier
- * \version 7.1.0 "Blackbird"
+ * \version 7.1.1 "Blackbird"
  *
  * SU2 Project Website: https://su2code.github.io
  *
  * The SU2 Project is maintained by the SU2 Foundation
  * (http://su2foundation.org)
  *
- * Copyright 2012-2020, SU2 Contributors (cf. AUTHORS.md)
+ * Copyright 2012-2021, SU2 Contributors (cf. AUTHORS.md)
  *
  * SU2 is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -422,7 +422,6 @@ void CNEMOTurbSASolver::Source_Residual(CGeometry *geometry, CSolver **solver_co
     }
 
     /*--- Subtract residual and the Jacobian ---*/
-
     LinSysRes.SubtractBlock(iPoint, residual);
 
     Jacobian.SubtractBlock2Diag(iPoint, residual.jacobian_i);
@@ -515,6 +514,7 @@ void CNEMOTurbSASolver::BC_HeatFlux_Wall(CGeometry *geometry, CSolver **solver_c
 
          su2double Res_Wall;// = new su2double [nVar];
          Res_Wall = coeff*RoughWallBC*Area;
+	 
          LinSysRes.SubtractBlock(iPoint, &Res_Wall);
 
          su2double Jacobian_i = (laminar_viscosity*Area)/(0.03*Roughness_Height*sigma);
@@ -635,9 +635,10 @@ void CNEMOTurbSASolver::BC_Inlet(CGeometry *geometry, CSolver **solver_container
                                   geometry->nodes->GetGridVel(iPoint));
 
       /*--- Compute the residual using an upwind scheme ---*/
+      
       auto residual = conv_numerics->ComputeResidual(config);
       LinSysRes.AddBlock(iPoint, residual);
-      
+
       /*--- Jacobian contribution for implicit integration ---*/
 
       Jacobian.AddBlock2Diag(iPoint, residual.jacobian_i);

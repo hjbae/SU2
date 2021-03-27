@@ -2,14 +2,14 @@
  * \file option_structure.hpp
  * \brief Defines classes for referencing options for easy input in CConfig
  * \author J. Hicken, B. Tracey
- * \version 7.1.0 "Blackbird"
+ * \version 7.1.1 "Blackbird"
  *
  * SU2 Project Website: https://su2code.github.io
  *
  * The SU2 Project is maintained by the SU2 Foundation
  * (http://su2foundation.org)
  *
- * Copyright 2012-2020, SU2 Contributors (cf. AUTHORS.md)
+ * Copyright 2012-2021, SU2 Contributors (cf. AUTHORS.md)
  *
  * SU2 is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -596,11 +596,13 @@ MakePair("ONESPECIES", ONESPECIES)
  */
 enum ENUM_TRANSCOEFFMODEL {
   WILKE      = 0,
-  GUPTAYOS   = 1
+  GUPTAYOS   = 1,
+  DEBUG      = 2
 };
 static const MapType<string, ENUM_TRANSCOEFFMODEL> TransCoeffModel_Map = {
 MakePair("WILKE", WILKE)
 MakePair("GUPTA-YOS", GUPTAYOS)
+MakePair("DEBUG",DEBUG)
 };
 
 /*!

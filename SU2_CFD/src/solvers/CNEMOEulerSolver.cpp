@@ -2,14 +2,14 @@
  * \file CNEMOEulerSolver.cpp
  * \brief Headers of the CNEMOEulerSolver class
  * \author S. R. Copeland, F. Palacios, W. Maier, C. Garbacz
- * \version 7.1.0 "Blackbird"
+ * \version 7.1.1 "Blackbird"
  *
  * SU2 Project Website: https://su2code.github.io
  *
  * The SU2 Project is maintained by the SU2 Foundation
  * (http://su2foundation.org)
  *
- * Copyright 2012-2020, SU2 Contributors (cf. AUTHORS.md)
+ * Copyright 2012-2021, SU2 Contributors (cf. AUTHORS.md)
  *
  * SU2 is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1249,7 +1249,7 @@ void CNEMOEulerSolver::Source_Residual(CGeometry *geometry, CSolver **solver_con
           numerics->SetConservative(nodes->GetSolution(iPoint),   nodes->GetSolution(iPoint));
 
           /*--- Set primitive vars ---*/
-          numerics->SetPrimitive(nodes->GetPrimitive(iPoint),  nodes->GetPrimitive(iPoint) );
+          numerics->SetPrimitive   (nodes->GetPrimitive(iPoint),  nodes->GetPrimitive(iPoint) );
 
           /*--- Set gradient of primitive variables ---*/
           numerics->SetPrimVarGradient(nodes->GetGradient_Primitive(iPoint), nodes->GetGradient_Primitive(iPoint));
@@ -1271,6 +1271,9 @@ void CNEMOEulerSolver::Source_Residual(CGeometry *geometry, CSolver **solver_con
 
           /*--- Vib-el. thermal conductivity ---*/
           numerics->SetThermalConductivity_ve(nodes->GetThermalConductivity_ve(iPoint), nodes->GetThermalConductivity_ve(iPoint));
+
+          /*--- Vib-el energy ---*/
+          numerics->SetEve(nodes->GetEve(iPoint), nodes->GetEve(iPoint));
 
           /*--- Set turbulence kinetic energy ---*/
           if (rans){
@@ -1305,6 +1308,7 @@ void CNEMOEulerSolver::Source_Residual(CGeometry *geometry, CSolver **solver_con
   eChm_global = eChm_local;
   eVib_global = eVib_local;
 
+  //THIS IS NO FUN
   if ((eAxi_global != 0) ||
       (eChm_global != 0) ||
       (eVib_global != 0)) {
@@ -1343,7 +1347,7 @@ void CNEMOEulerSolver::ExplicitEuler_Iteration(CGeometry *geometry, CSolver **so
       for (iVar = 0; iVar < nVar; iVar++) {
 
         Res = local_Residual[iVar] + local_Res_TruncError[iVar];
-        nodes->AddSolution(iPoint, iVar, -Res*Delta);
+	nodes->AddSolution(iPoint, iVar, -Res*Delta);
         AddRes_RMS(iVar, Res*Res);
         AddRes_Max(iVar, fabs(Res), geometry->nodes->GetGlobalIndex(iPoint), geometry->nodes->GetCoord(iPoint));
 
@@ -1380,7 +1384,7 @@ void CNEMOEulerSolver::ExplicitRK_Iteration(CGeometry *geometry,CSolver **solver
 
     Res_TruncError = nodes->GetResTruncError(iPoint);
     Residual = LinSysRes.GetBlock(iPoint);
-
+    
     for (iVar = 0; iVar < nVar; iVar++) {
       Res = Residual[iVar] + Res_TruncError[iVar];
       nodes->AddSolution(iPoint,iVar, -Res*Delta*RK_AlphaCoeff);
@@ -1749,8 +1753,8 @@ void CNEMOEulerSolver::SetNondimensionalization(CConfig *config, unsigned short 
     ModelTableOut <<"-- Models:"<< endl;
 
     ModelTable.AddColumn("Mixture", 25);
-    ModelTable.AddColumn("Fluid Model", 25);
     ModelTable.AddColumn("Transport Model", 25);
+    ModelTable.AddColumn("Fluid Model", 25);
     ModelTable.SetAlign(PrintingToolbox::CTablePrinter::RIGHT);
     ModelTable.PrintHeader();
 
@@ -2161,7 +2165,7 @@ void CNEMOEulerSolver::BC_Inlet(CGeometry *geometry, CSolver **solution_containe
   T_INDEX       = nodes->GetTIndex();
   TVE_INDEX     = nodes->GetTveIndex();
   H_INDEX       = nodes->GetHIndex();
-
+  
   /*--- Loop over all the vertices on this boundary marker ---*/
   for (iVertex = 0; iVertex < geometry->nVertex[val_marker]; iVertex++) {
     iPoint = geometry->vertex[val_marker][iVertex]->GetNode();
@@ -2216,7 +2220,7 @@ void CNEMOEulerSolver::BC_Inlet(CGeometry *geometry, CSolver **solution_containe
         Gamma = rhoR/(V_domain[RHOCVTR_INDEX]+
                       V_domain[RHOCVVE_INDEX])+1;
         Gamma_Minus_One = Gamma-1.0;
-
+        
         /*--- Store primitives and set some variables for clarity. ---*/
         //TODO NEED TO RECOMPUTE GAS_CONSTANT?
         Density = V_domain[RHO_INDEX];
@@ -2301,7 +2305,7 @@ void CNEMOEulerSolver::BC_Inlet(CGeometry *geometry, CSolver **solution_containe
         U_inlet[nVar-2] = Energy*Density;
         U_inlet[nVar-1] = U_domain[nVar-1];
 
-        /*--- Primitive variables, using the derived quantities ---*/
+	/*--- Primitive variables, using the derived quantities ---*/
         //TODO, 1species only
         for (iSpecies=0; iSpecies<nSpecies; iSpecies++)
           V_inlet[iSpecies] = 1.0*Density;
@@ -2315,9 +2319,10 @@ void CNEMOEulerSolver::BC_Inlet(CGeometry *geometry, CSolver **solution_containe
         V_inlet[A_INDEX] = sqrt(SoundSpeed2);
         V_inlet[RHOCVTR_INDEX] = V_domain[RHOCVTR_INDEX];
         V_inlet[RHOCVVE_INDEX] = V_domain[RHOCVVE_INDEX];
-
+	
 	break;
-      /*--- Mass flow has been specified at the inlet. ---*/
+      
+        /*--- Mass flow has been specified at the inlet. ---*/
 //      case MASS_FLOW:
 
 //        SU2_MPI::Error("BC_INLET: If you somehow got here....you are very special..", CURRENT_FUNCTION);
@@ -2374,13 +2379,12 @@ void CNEMOEulerSolver::BC_Inlet(CGeometry *geometry, CSolver **solution_containe
       }
 
       /*--- Set various quantities in the solver class ---*/
-      conv_numerics->SetEve(nodes->GetEve(iPoint),nodes->GetEve(iPoint));
+      conv_numerics->SetEve(node_infty->GetEve(0),nodes->GetEve(iPoint));
       conv_numerics->SetConservative(U_domain, U_inlet);
       conv_numerics->SetPrimitive(V_domain, V_inlet);
 
       /*--- Compute the residual using an upwind scheme ---*/
       auto residual = conv_numerics->ComputeResidual(config);
-
       LinSysRes.AddBlock(iPoint, residual);
 
       /*--- Jacobian contribution for implicit integration ---*/
@@ -2887,7 +2891,7 @@ void CNEMOEulerSolver::BC_Supersonic_Outlet(CGeometry *geometry, CSolver **solut
 
   /*--- Supersonic outlet flow: there are no ingoing characteristics,
    so all flow variables can should be interpolated from the domain. ---*/
-
+  
   /*--- Loop over all the vertices on this boundary marker ---*/
   for (iVertex = 0; iVertex < geometry->nVertex[val_marker]; iVertex++) {
 
@@ -2927,6 +2931,7 @@ void CNEMOEulerSolver::BC_Supersonic_Outlet(CGeometry *geometry, CSolver **solut
 
       /*--- Compute the residual using an upwind scheme ---*/
       auto residual = conv_numerics->ComputeResidual(config);
+
       LinSysRes.AddBlock(iPoint, residual);
 
       /*--- Jacobian contribution for implicit integration ---*/

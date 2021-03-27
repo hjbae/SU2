@@ -4,14 +4,14 @@
  *        Contains methods for common tasks, e.g. compute flux
  *        Jacobians.
  * \author S.R. Copeland, W. Maier, C. Garbacz
- * \version 7.1.0 "Blackbird"
+ * \version 7.1.1 "Blackbird"
  *
  * SU2 Project Website: https://su2code.github.io
  *
  * The SU2 Project is maintained by the SU2 Foundation
  * (http://su2foundation.org)
  *
- * Copyright 2012-2020, SU2 Contributors (cf. AUTHORS.md)
+ * Copyright 2012-2021, SU2 Contributors (cf. AUTHORS.md)
  *
  * SU2 is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -321,8 +321,8 @@ void CNEMONumerics::GetViscousProjFlux(su2double *val_primvar,
   su2double Mass = 0.0;
   su2double tmp1, scl, Cptr;
   for (iSpecies=0;iSpecies<nSpecies;iSpecies++)
-    Mass += V[iSpecies]*Ms[iSpecies];
-  Cptr = V[RHOCVTR_INDEX]+Ru/Mass;
+    Mass += V[iSpecies]/V[RHO_INDEX]*Ms[iSpecies];
+  Cptr = V[RHOCVTR_INDEX]/V[RHO_INDEX]+Ru/Mass;
   tmp1 = Cptr*(val_eddy_viscosity/Prandtl_Turb);
   scl  = tmp1/ktr;
   ktr += Cptr*(val_eddy_viscosity/Prandtl_Turb);

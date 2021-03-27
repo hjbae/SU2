@@ -2,14 +2,14 @@
  * \file CNEMONSSolver.cpp
  * \brief Headers of the CNEMONSSolver class
  * \author S. R. Copeland, F. Palacios, W. Maier.
- * \version 7.1.0 "Blackbird"
+ * \version 7.1.1 "Blackbird"
  *
  * SU2 Project Website: https://su2code.github.io
  *
  * The SU2 Project is maintained by the SU2 Foundation
  * (http://su2foundation.org)
  *
- * Copyright 2012-2020, SU2 Contributors (cf. AUTHORS.md)
+ * Copyright 2012-2021, SU2 Contributors (cf. AUTHORS.md)
  *
  * SU2 is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -111,6 +111,7 @@ void CNEMONSSolver::Preprocessing(CGeometry *geometry, CSolver **solver_containe
   }
 
   /*--- Evaluate the vorticity and strain rate magnitude ---*/
+  //TODO: THIS NEEDS TO BE UPDATED ASAP!
   StrainMag_Max = 0.0;
   Omega_Max = 0.0;
 
@@ -208,7 +209,7 @@ unsigned long CNEMONSSolver::SetPrimitive_Variables(CSolver **solver_container,C
       eddy_visc = solver_container[TURB_SOL]->GetNodes()->GetmuT(iPoint);
       if (tkeNeeded) turb_ke = solver_container[TURB_SOL]->GetNodes()->GetSolution(iPoint,0);
 
-       nodes->SetEddyViscosity(iPoint, eddy_visc);
+      nodes->SetEddyViscosity(iPoint, eddy_visc);
     }
 
     /*--- Incompressible flow, primitive variables ---*/
@@ -320,7 +321,7 @@ void CNEMONSSolver::BC_HeatFluxNonCatalytic_Wall(CGeometry *geometry,
   /*--- Local variables ---*/
   bool implicit;
   unsigned short iDim, iVar;
-  unsigned short T_INDEX, TVE_INDEX, RHOCVTR_INDEX;
+  unsigned short T_INDEX, TVE_INDEX,RHO_INDEX, RHOCVTR_INDEX;
   unsigned long iVertex, iPoint, total_index;
   su2double dTdn, dTvedn, ktr, kve, pcontrol, Wall_HeatFlux;
   su2double *Normal, Area;
@@ -382,8 +383,8 @@ void CNEMONSSolver::BC_HeatFluxNonCatalytic_Wall(CGeometry *geometry,
       su2double Ru=1000.0*UNIVERSAL_GAS_CONSTANT;
       su2double eddy_viscosity = nodes->GetEddyViscosity(iPoint);
       for (unsigned short iSpecies=0; iSpecies<nSpecies; iSpecies++)
-        Mass += V[iSpecies]*Ms[iSpecies];
-      Cptr = V[RHOCVTR_INDEX]+Ru/Mass;
+        Mass += V[iSpecies]/V[RHO_INDEX]*Ms[iSpecies];
+      Cptr = V[RHOCVTR_INDEX]/V[RHO_INDEX]+Ru/Mass;
       tmp1 = Cptr*(eddy_viscosity/Prandtl_Turb);
       scl  = tmp1/ktr;
       ktr += Cptr*(eddy_viscosity/Prandtl_Turb);
@@ -396,7 +397,7 @@ void CNEMONSSolver::BC_HeatFluxNonCatalytic_Wall(CGeometry *geometry,
                                       Wall_HeatFlux*Area;
       Res_Visc[nSpecies+nDim+1] += pcontrol*(kve*dTvedn) +
                                       Wall_HeatFlux*Area;
-
+ 
       /*--- Apply viscous residual to the linear system ---*/
       LinSysRes.SubtractBlock(iPoint, Res_Visc);
 
@@ -673,7 +674,7 @@ void CNEMONSSolver::BC_IsothermalNonCatalytic_Wall(CGeometry *geometry,
   unsigned short iDim, iVar;
   unsigned long iVertex, iPoint, jPoint;
   su2double ktr, kve, Ti, Tvei, Tj, Tvej, Twall, dij, theta,
-  Area, *Normal, UnitNormal[3], *Coord_i, *Coord_j, C;
+  Area, *Normal, UnitNormal[3], C;
   su2double *V;
   bool ionization = config->GetIonization();
 
@@ -684,6 +685,7 @@ void CNEMONSSolver::BC_IsothermalNonCatalytic_Wall(CGeometry *geometry,
 
   /*--- Extract required indices ---*/
   unsigned short RHOCVTR_INDEX = nodes->GetRhoCvtrIndex();
+  unsigned short RHO_INDEX = nodes->GetRhoIndex();
 
   /*--- Define 'proportional control' constant ---*/
   C = 5;
@@ -707,17 +709,14 @@ void CNEMONSSolver::BC_IsothermalNonCatalytic_Wall(CGeometry *geometry,
         UnitNormal[iDim] = -Normal[iDim]/Area;
 
       /*--- Compute closest normal neighbor ---*/
-      jPoint = geometry->vertex[val_marker][iVertex]->GetNormal_Neighbor();
+      const auto Point_Normal = geometry->vertex[val_marker][iVertex]->GetNormal_Neighbor();
+      
+      /*--- Compute distance between wall & normal neighbor ---*/      
+      const auto Coord_i = geometry->nodes->GetCoord(iPoint);
+      const auto Coord_j = geometry->nodes->GetCoord(Point_Normal);
 
-      /*--- Compute distance between wall & normal neighbor ---*/
-      Coord_i = geometry->nodes->GetCoord(iPoint);
-      Coord_j = geometry->nodes->GetCoord(jPoint);
-
-      dij = 0.0;
-      for (iDim = 0; iDim < nDim; iDim++)
-        dij += (Coord_j[iDim] - Coord_i[iDim])*(Coord_j[iDim] - Coord_i[iDim]);
-      dij = sqrt(dij);
-
+      su2double dij = GeometryToolbox::Distance(nDim, Coord_i, Coord_j);
+      
       /*--- Calculate geometrical parameters ---*/
       theta = 0.0;
       for (iDim = 0; iDim < nDim; iDim++) {
@@ -740,9 +739,9 @@ void CNEMONSSolver::BC_IsothermalNonCatalytic_Wall(CGeometry *geometry,
 
       /*--- Calculate the gradient of temperature ---*/
       Ti   = nodes->GetTemperature(iPoint);
-      Tj   = nodes->GetTemperature(jPoint);
+      Tj   = nodes->GetTemperature(Point_Normal);
       Tvei = nodes->GetTemperature_ve(iPoint);
-      Tvej = nodes->GetTemperature_ve(jPoint);
+      Tvej = nodes->GetTemperature_ve(Point_Normal);
 
       /*--- Rename variables for convenience ---*/
       ktr     = nodes->GetThermalConductivity(iPoint);
@@ -758,8 +757,8 @@ void CNEMONSSolver::BC_IsothermalNonCatalytic_Wall(CGeometry *geometry,
       su2double Ru=1000.0*UNIVERSAL_GAS_CONSTANT;
       su2double eddy_viscosity=nodes->GetEddyViscosity(iPoint);
       for (unsigned short iSpecies=0; iSpecies<nSpecies; iSpecies++)
-        Mass += V[iSpecies]*Ms[iSpecies];
-      Cptr = V[RHOCVTR_INDEX]+Ru/Mass;
+        Mass += V[iSpecies]/V[RHO_INDEX]*Ms[iSpecies];
+      Cptr = V[RHOCVTR_INDEX]/V[RHO_INDEX]+Ru/Mass;
       tmp1 = Cptr*(eddy_viscosity/Prandtl_Turb);
       scl  = tmp1/ktr;
       ktr += Cptr*(eddy_viscosity/Prandtl_Turb);
@@ -768,10 +767,12 @@ void CNEMONSSolver::BC_IsothermalNonCatalytic_Wall(CGeometry *geometry,
       //kve += Cpve*(val_eddy_viscosity/Prandtl_Turb);
 
       /*--- Apply to the linear system ---*/
-      /*--- Apply to the linear system ---*/
+      //Res_Visc[nSpecies+nDim]   = ((ktr*(Ti-Tj)    + kve*(Tvei-Tvej)) +
+      //                             (ktr*(Twall-Ti) + kve*(Twall-Tvei))*C)*Area/dij;
+      //Res_Visc[nSpecies+nDim+1] = (kve*(Tvei-Tvej) + kve*(Twall-Tvei) *C)*Area/dij;       
+      
       Res_Visc[nSpecies+nDim]   = ((ktr*(Twall-Tj) + kve*(Twall-Tvej)))*Area/dij;
       Res_Visc[nSpecies+nDim+1] = (kve*(Twall-Tvej))*Area/dij;
-
       LinSysRes.SubtractBlock(iPoint, Res_Visc);
 
       //if (implicit) {
@@ -1019,11 +1020,11 @@ void CNEMONSSolver::BC_Smoluchowski_Maxwell(CGeometry *geometry,
   }
 
   /*--- Define 'proportional control' constant ---*/
-  C = 5;
+  C = 1;
 
   /*---Define under-relaxation factors --- */
-  alpha_V = 0.01;
-  alpha_T = 0.25;
+  alpha_V = 0.1;
+  alpha_T = 1.0;
 
   /*--- Identify the boundary ---*/
   string Marker_Tag = config->GetMarker_All_TagBound(val_marker);

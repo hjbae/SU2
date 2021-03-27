@@ -2,14 +2,14 @@
  * \file CNEMOTurbSolver.cpp
  * \brief Main subrotuines of CNEMOTurbSolver class
  * \author F. Palacios, A. Bueno
- * \version 7.0.6 "Blackbird"
+ * \version 7.1.1 "Blackbird"
  *
  * SU2 Project Website: https://su2code.github.io
  *
  * The SU2 Project is maintained by the SU2 Foundation
  * (http://su2foundation.org)
  *
- * Copyright 2012-2020, SU2 Contributors (cf. AUTHORS.md)
+ * Copyright 2012-2021, SU2 Contributors (cf. AUTHORS.md)
  *
  * SU2 is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -549,6 +549,7 @@ void CNEMOTurbSolver::ImplicitEuler_Iteration(CGeometry *geometry, CSolver **sol
       LinSysSol[total_index] = 0.0;
 
       su2double Res = fabs(LinSysRes[total_index]);
+      //cout <<"delete me euler int. Res: "<<Res<<endl;
       resRMS[iVar] += Res*Res;
       if (Res > resMax[iVar]) {
         resMax[iVar] = Res;
@@ -601,7 +602,7 @@ void CNEMOTurbSolver::ImplicitEuler_Iteration(CGeometry *geometry, CSolver **sol
 
         SU2_OMP_FOR_STAT(omp_chunk_size)
         for (unsigned long iPoint = 0; iPoint < nPointDomain; iPoint++) {
-	  nodes->AddSolution(iPoint, 0, nodes->GetUnderRelaxation(iPoint)*LinSysSol[iPoint]);
+          nodes->AddSolution(iPoint, 0, nodes->GetUnderRelaxation(iPoint)*LinSysSol[iPoint]);
         }
         break;
 

@@ -2,14 +2,14 @@
  * \file CNSSolver.cpp
  * \brief Main subrotuines for solving Finite-Volume Navier-Stokes flow problems.
  * \author F. Palacios, T. Economon
- * \version 7.1.0 "Blackbird"
+ * \version 7.1.1 "Blackbird"
  *
  * SU2 Project Website: https://su2code.github.io
  *
  * The SU2 Project is maintained by the SU2 Foundation
  * (http://su2foundation.org)
  *
- * Copyright 2012-2020, SU2 Contributors (cf. AUTHORS.md)
+ * Copyright 2012-2021, SU2 Contributors (cf. AUTHORS.md)
  *
  * SU2 is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -608,7 +608,7 @@ void CNSSolver::BC_HeatFlux_Wall(CGeometry *geometry, CSolver **solver_container
 
     su2double Res_Conv = 0.0;
     su2double Res_Visc = Wall_HeatFlux * Area;
-
+    
     /*--- Impose the value of the velocity as a strong boundary
      condition (Dirichlet). Fix the velocity and remove any
      contribution to the residual at this node. ---*/
@@ -642,7 +642,6 @@ void CNSSolver::BC_HeatFlux_Wall(CGeometry *geometry, CSolver **solver_container
     }
 
     /*--- Convective and viscous contributions to the residual at the wall ---*/
-
     LinSysRes(iPoint, nDim+1) += Res_Conv - Res_Visc;
 
     /*--- Enforce the no-slip boundary condition in a strong way by
