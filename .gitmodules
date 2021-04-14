@@ -12,3 +12,6 @@
 [submodule "externals/meson"]
 	path = externals/meson
 	url = https://github.com/mesonbuild/meson
+[submodule "SU2-Korali"]
+	path = SU2-Korali
+	url = https://github.com/hjbae/SU2-Korali.git
