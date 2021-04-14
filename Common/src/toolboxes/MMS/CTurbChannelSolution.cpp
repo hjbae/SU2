@@ -85,12 +85,8 @@ CTurbChannelSolution::CTurbChannelSolution(unsigned short val_nDim,
   /*--- Store specific parameters here. ---*/
 
   Verification_Solution = config->GetVerification_Solution();
-  if ( Verification_Solution == TURBULENT_CHANNEL)
-    ReynoldsFriction = 5200.0;  // Friction Reynolds Number.
-  else if (Verification_Solution == PERIODIC_HILL)
-    ReynoldsFriction = 582.0;  // Friction Reynolds Number.
 
-  TWall            = 273.15; // Wall Temperature
+  TWall            = 300;    // Wall Temperature
   dx               = 0.2;    // Mesh spacing in the x-direction
   dz               = 0.1;    // Mesh spacing in the z-direction
   Constant_Turb    = 10.;    // Constant to multiply the velocity fluctuation.
@@ -99,8 +95,7 @@ CTurbChannelSolution::CTurbChannelSolution(unsigned short val_nDim,
   /*--- Turbulent flow. Use the relation of Malaspinas and Sagaut,JCP 275 2014,
   to compute the Reynolds number. ---*/
 
-  ReynoldsMeanVelocity = pow((8./ 0.073),(4./7.))
-                        * pow(ReynoldsFriction,(8./7.));
+  ReynoldsMeanVelocity = config->GetReynolds();
 
   /*--- Useful coefficients  ---*/
   RGas            = config->GetGas_Constant();
@@ -109,6 +104,7 @@ CTurbChannelSolution::CTurbChannelSolution(unsigned short val_nDim,
   su2double Prandtl_Lam = config->GetPrandtl_Lam();
   muLam = config->GetViscosity_FreeStream();
   su2double rhoDim = config->GetDensity_FreeStream();
+  const su2double* BodyForce = config->GetBody_Force_Vector();
 
   rhoRef  = config->GetDensity_Ref();
   uRef    = config->GetVelocity_Ref();
@@ -116,7 +112,8 @@ CTurbChannelSolution::CTurbChannelSolution(unsigned short val_nDim,
   ovGm1 = 1.0/(Gamma - 1.0);
 
   // Friction velocity
-  uTau = (2.0*ReynoldsFriction*muLam)/(rhoDim*config->GetLength_Reynolds());
+  uTau = pow( BodyForce[0]/rhoDim/pow(config->GetLength_Reynolds(),2.0),0.5);
+  ReynoldsFriction = uTau * config->GetLength_Reynolds() / (muLam/rhoDim);
 
   // Friction Length
   lTau = (muLam/rhoDim) / uTau;
@@ -124,7 +121,7 @@ CTurbChannelSolution::CTurbChannelSolution(unsigned short val_nDim,
   // Compute the wall shear stress and the body force.
   tauWall = rhoDim*uTau*uTau;
 
-  fBodyX = 2.0*tauWall/config->GetLength_Reynolds();
+  fBodyX = tauWall*pow(config->GetLength_Reynolds(),2);
 
   // The velocity profile is approximated with the following fit
   // u = a0*(1-|2*y/h|^alpha), where a0 = uMean*(alpha+1)/alpha.
@@ -140,7 +137,7 @@ CTurbChannelSolution::CTurbChannelSolution(unsigned short val_nDim,
   // When the removed heat equals the work of the body force vector, the
   // temperature in the middle of the channel can be estimated. This is
   // done below.
-  halfChan = 0.5*config->GetLength_Reynolds();
+  halfChan = config->GetLength_Reynolds();
   su2double kCondLam = muLam*Gamma*Cv/Prandtl_Lam;
   TMiddle  = TWall + halfChan*halfChan*uMean*fBodyX/(kCondLam*(alpha+2.0));
 
@@ -589,7 +586,7 @@ void CTurbChannelSolution::ComputeFullyDevelopedRANS(CConfig*  config,
     // Determine the distribution of the grid points. Use the existing function
     // to compute the point distribution over the full channel.
     vector<su2double> yFullChannel(2*nGridPoints-1);
-    PointDistributionVinokur(config->GetLength_Reynolds(), dyWall, yFullChannel);
+    PointDistributionVinokur(2*config->GetLength_Reynolds(), dyWall, yFullChannel);
 
     // Copy the relevant part of the point distribution in yRANS.
     for(int i=0; i<nGridPoints; ++i)

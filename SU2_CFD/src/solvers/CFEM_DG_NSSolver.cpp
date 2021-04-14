@@ -132,6 +132,11 @@ CFEM_DG_NSSolver::CFEM_DG_NSSolver(CGeometry *geometry, CConfig *config, unsigne
         SGSModelUsed = true;
         break;
 
+      case AMD:
+	SGSModel     = new CAMDModel;
+	SGSModelUsed = true;
+	break;
+
       case VREMAN:
         SGSModel     = new CVremanModel;
         SGSModelUsed = true;

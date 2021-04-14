@@ -5476,6 +5476,7 @@ void CConfig::SetOutput(unsigned short val_software, unsigned short val_izone) {
           case IMPLICIT_LES: cout << "Implicit LES" << endl; break;
           case SMAGORINSKY:  cout << "Smagorinsky " << endl; break;
           case WALE:         cout << "WALE"         << endl; break;
+          case AMD:          cout << "AMD"          << endl; break;
           case VREMAN:       cout << "VREMAN"       << endl; break;
           case SIGMA:        cout << "SIGMA"        << endl; break;
         }
@@ -5517,6 +5518,7 @@ void CConfig::SetOutput(unsigned short val_software, unsigned short val_izone) {
           case IMPLICIT_LES: cout << "Implicit LES" << endl; break;
           case SMAGORINSKY:  cout << "Smagorinsky " << endl; break;
           case WALE:         cout << "WALE"         << endl; break;
+          case AMD:          cout << "AMD"          << endl; break;
           case VREMAN:       cout << "VREMAN"       << endl; break;
           case SIGMA:        cout << "SIGMA"        << endl; break;
           default:

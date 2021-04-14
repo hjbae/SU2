@@ -1253,3 +1253,57 @@ void CDriver::SetInlet_Angle(unsigned short iMarker, passivedouble alpha){
 
 }
 
+void CDriver::SetTauWall_WMLES(unsigned short iMarker, unsigned long iVertex, passivedouble ival){
+
+   solver_container[ZONE_0][INST_0][MESH_0][FLOW_SOL]->SetTauWall_WMLES(iMarker,iVertex,ival);   
+}
+
+passivedouble CDriver::GetTauWall_WMLES(unsigned short iMarker, unsigned long iVertex){
+
+   return solver_container[ZONE_0][INST_0][MESH_0][FLOW_SOL]->GetTauWall_WMLES(iMarker,iVertex);   
+}
+
+passivedouble CDriver::GetVelOffWall(unsigned short iMarker, unsigned long iVertex, unsigned short iDim){ 
+
+   su2double Vel;
+
+   Vel = 0.0;
+
+   if (geometry_container[ZONE_0][INST_0][MESH_0]->vertex[iMarker][iVertex]->GetDonorFound()){
+
+      /*--- Load the coefficients and interpolate---*/
+      unsigned short nDonors = geometry_container[ZONE_0][INST_0][MESH_0]->vertex[iMarker][iVertex]->GetnDonorPoints();
+
+      for (unsigned short iNode = 0; iNode < nDonors; iNode++) {
+         unsigned long donorPoint = geometry_container[ZONE_0][INST_0][MESH_0]->vertex[iMarker][iVertex]->GetInterpDonorPoint(iNode);
+         su2double donnorCoeff    = geometry_container[ZONE_0][INST_0][MESH_0]->vertex[iMarker][iVertex]->GetDonorCoeff(iNode);
+
+         Vel += donnorCoeff*solver_container[ZONE_0][INST_0][MESH_0][FLOW_SOL]->GetNodes()->GetSolution(donorPoint,iDim+1)
+		 /solver_container[ZONE_0][INST_0][MESH_0][FLOW_SOL]->GetNodes()->GetSolution(donorPoint,0); 
+      }
+   }
+
+   return SU2_TYPE::GetValue(Vel);
+}
+
+passivedouble CDriver::GetVelGradOffWall(unsigned short iMarker, unsigned long iVertex, unsigned short iDim, unsigned short jDim){ 
+
+   su2double dVel;
+
+   dVel = 0.0;
+
+   if (geometry_container[ZONE_0][INST_0][MESH_0]->vertex[iMarker][iVertex]->GetDonorFound()){
+
+      /*--- Load the coefficients and interpolate---*/
+      unsigned short nDonors = geometry_container[ZONE_0][INST_0][MESH_0]->vertex[iMarker][iVertex]->GetnDonorPoints();
+
+      for (unsigned short iNode = 0; iNode < nDonors; iNode++) {
+         unsigned long donorPoint = geometry_container[ZONE_0][INST_0][MESH_0]->vertex[iMarker][iVertex]->GetInterpDonorPoint(iNode);
+         su2double donnorCoeff    = geometry_container[ZONE_0][INST_0][MESH_0]->vertex[iMarker][iVertex]->GetDonorCoeff(iNode);
+
+         dVel += donnorCoeff*solver_container[ZONE_0][INST_0][MESH_0][FLOW_SOL]->GetNodes()->GetGradient_Primitive(donorPoint,iDim+1,jDim);
+      }
+   }
+
+   return SU2_TYPE::GetValue(dVel);
+}

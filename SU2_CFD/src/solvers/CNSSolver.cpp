@@ -144,6 +144,10 @@ CNSSolver::CNSSolver(CGeometry *geometry, CConfig *config, unsigned short iMesh)
       SGSModel     = new CWALEModel;
       SGSModelUsed = true;
       break;
+    case AMD:
+      SGSModel     = new CAMDModel;
+      SGSModelUsed = true;
+      break;
     case VREMAN:
       SGSModel     = new CVremanModel;
       SGSModelUsed = true;
@@ -212,7 +216,7 @@ CNSSolver::CNSSolver(CGeometry *geometry, CConfig *config, unsigned short iMesh)
             break;
           case TEMPLATE_WALL_MODEL:
             WallModel = new CWallModelTemplate(config,WallFunctionsMarker_[0]);
-          break;
+            break;
 
           default:
             break;

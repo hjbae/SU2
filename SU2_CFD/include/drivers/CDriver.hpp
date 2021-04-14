@@ -842,7 +842,38 @@ public:
    */
   void SetInlet_Angle(unsigned short iMarker, passivedouble alpha);
 
+  /*!
+   * \brief Set the wall shear stress for WMLES
+   * \param[in] iMarker - Marker index.
+   * \param[in] iVertex - Vertex index.
+   * \param[in] ival    - tauw 
+   */
+  void SetTauWall_WMLES(unsigned short iMarker, unsigned long iVertex, passivedouble ival);
 
+  /*!
+   * \brief Get the wall shear stress for WMLES
+   * \param[in] iMarker - Marker index.
+   * \param[in] iVertex - Vertex index.
+   * \param[in] ival    - tauw 
+   */
+  passivedouble GetTauWall_WMLES(unsigned short iMarker, unsigned long iVertex);
+
+  /*!
+   * \brief Get the off-wall velocity component 
+   * \param[in] iMarker - Marker index.
+   * \param[in] iVertex - Vertex index.
+   * \param[in] iDim    - Index of the flow direction unit vector 
+   */
+  passivedouble GetVelOffWall(unsigned short iMarker, unsigned long iVertex, unsigned short iDim);
+
+  /*!
+   * \brief Get the off-wall velocity component 
+   * \param[in] iMarker - Marker index.
+   * \param[in] iVertex - Vertex index.
+   * \param[in] iDim    - Index of the flow direction unit vector 
+   * \param[in] jDim    - Index of the derivative direction
+   */
+  passivedouble GetVelGradOffWall(unsigned short iMarker, unsigned long iVertex, unsigned short iDim, unsigned short jDim);
 };
 
 /*!

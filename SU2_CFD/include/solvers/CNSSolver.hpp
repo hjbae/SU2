@@ -524,6 +524,16 @@ public:
   }
 
   /*!
+   * \brief Set the shear stress for the wall model.
+   * \param[in] val_marker - Surface marker where the coefficient is computed.
+   * \param[in] val_vertex - Vertex of the marker <i>val_marker</i> where the coefficient is evaluated.
+   * \param[in] val_tauw   - Value of TauWall_WMLES to be set
+   */
+  inline void SetTauWall_WMLES(unsigned short val_marker, unsigned long val_vertex, su2double val_tauw) override {
+    TauWall_WMLES[val_marker][val_vertex] = val_tauw;
+  }
+
+  /*!
    * \brief Get the heat flux from the wall model.
    * \param[in] val_marker - Surface marker where the coefficient is computed.
    * \param[in] val_vertex - Vertex of the marker <i>val_marker</i> where the coefficient is evaluated.

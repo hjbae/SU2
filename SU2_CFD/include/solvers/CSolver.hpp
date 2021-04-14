@@ -3256,6 +3256,21 @@ public:
    * \brief A virtual member.
    * \param[in] val_marker - Surface marker where the coefficient is computed.
    * \param[in] val_vertex - Vertex of the marker <i>val_marker</i> where the coefficient is evaluated.
+   * \param[in] val_tauw   - Value of TauWall_WMLES to be set
+   */
+  inline virtual void SetTauWall_WMLES(unsigned short val_marker, unsigned long val_vertex, su2double val_tauw) { } 
+
+  /*!
+   * \brief A virtual member.
+   * \param[in] val_marker - Surface marker where the coefficient is computed.
+   * \param[in] val_tauw   - Value of TauWall_WMLES to be set
+   */
+  inline virtual su2double GetTauWall_WMLES(unsigned short val_marker, unsigned long val_vertex) { return 0;} 
+
+  /*!
+   * \brief A virtual member.
+   * \param[in] val_marker - Surface marker where the coefficient is computed.
+   * \param[in] val_vertex - Vertex of the marker <i>val_marker</i> where the coefficient is evaluated.
    * \return Value of the heat flux from the wall model.
    */
   inline virtual su2double GetHeatFlux_WMLES(unsigned short val_marker, unsigned long val_vertex) const {return 0;}
