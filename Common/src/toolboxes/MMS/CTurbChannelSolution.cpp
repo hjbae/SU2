@@ -1052,14 +1052,14 @@ void CTurbChannelSolution::ComputeFullyDevelopedRANS(CConfig*  config,
 
   // In MPI mode the RANS solution must be broadcast to the other ranks.
 #ifdef HAVE_MPI
-  SU2_MPI::Bcast(yRANS.data(),     yRANS.size(),     MPI_DOUBLE,  MASTER_NODE, MPI_COMM_WORLD);
-  SU2_MPI::Bcast(rhoRANS.data(),   rhoRANS.size(),   MPI_DOUBLE,  MASTER_NODE, MPI_COMM_WORLD);
-  SU2_MPI::Bcast(uRANS.data(),     uRANS.size(),     MPI_DOUBLE,  MASTER_NODE, MPI_COMM_WORLD);
-  SU2_MPI::Bcast(kRANS.data(),     kRANS.size(),     MPI_DOUBLE,  MASTER_NODE, MPI_COMM_WORLD);
-  SU2_MPI::Bcast(omegaRANS.data(), omegaRANS.size(), MPI_DOUBLE,  MASTER_NODE, MPI_COMM_WORLD);
-  SU2_MPI::Bcast(mutRANS.data(),   mutRANS.size(),     MPI_DOUBLE,  MASTER_NODE, MPI_COMM_WORLD);
-  SU2_MPI::Bcast(distRANS.data(),  distRANS.size(), MPI_DOUBLE,  MASTER_NODE, MPI_COMM_WORLD);
-  SU2_MPI::Bcast(dudyRANS.data(),  dudyRANS.size(), MPI_DOUBLE,  MASTER_NODE, MPI_COMM_WORLD);
+  SU2_MPI::Bcast(yRANS.data(),     yRANS.size(),     MPI_DOUBLE,  MASTER_NODE, SU2_MPI::GetComm());
+  SU2_MPI::Bcast(rhoRANS.data(),   rhoRANS.size(),   MPI_DOUBLE,  MASTER_NODE, SU2_MPI::GetComm());
+  SU2_MPI::Bcast(uRANS.data(),     uRANS.size(),     MPI_DOUBLE,  MASTER_NODE, SU2_MPI::GetComm());
+  SU2_MPI::Bcast(kRANS.data(),     kRANS.size(),     MPI_DOUBLE,  MASTER_NODE, SU2_MPI::GetComm());
+  SU2_MPI::Bcast(omegaRANS.data(), omegaRANS.size(), MPI_DOUBLE,  MASTER_NODE, SU2_MPI::GetComm());
+  SU2_MPI::Bcast(mutRANS.data(),   mutRANS.size(),     MPI_DOUBLE,  MASTER_NODE, SU2_MPI::GetComm());
+  SU2_MPI::Bcast(distRANS.data(),  distRANS.size(), MPI_DOUBLE,  MASTER_NODE, SU2_MPI::GetComm());
+  SU2_MPI::Bcast(dudyRANS.data(),  dudyRANS.size(), MPI_DOUBLE,  MASTER_NODE, SU2_MPI::GetComm());
 #endif
 }
 
@@ -1205,9 +1205,9 @@ void CTurbChannelSolution::STG_Preprocessing(vector<su2double> &PhaseMode,
     }
 
   #ifdef HAVE_MPI
-    SU2_MPI::Bcast(PhaseMode.data(), PhaseMode.size(), MPI_DOUBLE,  MASTER_NODE, MPI_COMM_WORLD);
-    SU2_MPI::Bcast(RandUnitVec.data(), RandUnitVec.size() , MPI_DOUBLE,  MASTER_NODE, MPI_COMM_WORLD);
-    SU2_MPI::Bcast(RandUnitNormal.data(), RandUnitVec.size(), MPI_DOUBLE,  MASTER_NODE, MPI_COMM_WORLD);
+    SU2_MPI::Bcast(PhaseMode.data(), PhaseMode.size(), MPI_DOUBLE,  MASTER_NODE, SU2_MPI::GetComm());
+    SU2_MPI::Bcast(RandUnitVec.data(), RandUnitVec.size() , MPI_DOUBLE,  MASTER_NODE, SU2_MPI::GetComm());
+    SU2_MPI::Bcast(RandUnitNormal.data(), RandUnitVec.size(), MPI_DOUBLE,  MASTER_NODE, SU2_MPI::GetComm());
   #endif
 
   // Number of waves (modes)
@@ -1276,18 +1276,18 @@ void CTurbChannelSolution::STG_Preprocessing(vector<su2double> &PhaseMode,
 
 #ifdef HAVE_MPI
 
-  SU2_MPI::Bcast(&max_lengthEnergetic, 1, MPI_DOUBLE,  MASTER_NODE, MPI_COMM_WORLD);
-  SU2_MPI::Bcast(&max_velocity, 1, MPI_DOUBLE,  MASTER_NODE, MPI_COMM_WORLD);
-  SU2_MPI::Bcast(&min_lengthNyquist, 1, MPI_DOUBLE,  MASTER_NODE, MPI_COMM_WORLD);
-  SU2_MPI::Bcast(&nWave, 1, MPI_INT,  MASTER_NODE, MPI_COMM_WORLD);
+  SU2_MPI::Bcast(&max_lengthEnergetic, 1, MPI_DOUBLE,  MASTER_NODE, SU2_MPI::GetComm());
+  SU2_MPI::Bcast(&max_velocity, 1, MPI_DOUBLE,  MASTER_NODE, SU2_MPI::GetComm());
+  SU2_MPI::Bcast(&min_lengthNyquist, 1, MPI_DOUBLE,  MASTER_NODE, SU2_MPI::GetComm());
+  SU2_MPI::Bcast(&nWave, 1, MPI_INT,  MASTER_NODE, SU2_MPI::GetComm());
 
   if (rank!=MASTER_NODE){
     WaveNumbers.resize(nWave);
     DeltaWave.resize(nWave);
   }
 
-  SU2_MPI::Bcast(WaveNumbers.data(), WaveNumbers.size(), MPI_DOUBLE,  MASTER_NODE, MPI_COMM_WORLD);
-  SU2_MPI::Bcast(DeltaWave.data(), DeltaWave.size(), MPI_DOUBLE,  MASTER_NODE, MPI_COMM_WORLD);
+  SU2_MPI::Bcast(WaveNumbers.data(), WaveNumbers.size(), MPI_DOUBLE,  MASTER_NODE, SU2_MPI::GetComm());
+  SU2_MPI::Bcast(DeltaWave.data(), DeltaWave.size(), MPI_DOUBLE,  MASTER_NODE, SU2_MPI::GetComm());
 #endif
 
 }
