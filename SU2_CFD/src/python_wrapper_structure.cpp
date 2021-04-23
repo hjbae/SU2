@@ -1255,12 +1255,15 @@ void CDriver::SetInlet_Angle(unsigned short iMarker, passivedouble alpha){
 
 void CDriver::SetTauWall_WMLES(unsigned short iMarker, unsigned long iVertex, passivedouble ival){
 
-   solver_container[ZONE_0][INST_0][MESH_0][FLOW_SOL]->SetTauWall_WMLES(iMarker,iVertex,ival);   
+   //solver_container[ZONE_0][INST_0][MESH_0][FLOW_SOL]->SetTauWall_WMLES(iMarker,iVertex,ival);   
+   unsigned long iPoint = geometry_container[ZONE_0][INST_0][MESH_0]->vertex[iMarker][iVertex]->GetNode();
+   solver_container[ZONE_0][INST_0][MESH_0][FLOW_SOL]->GetNodes()->SetTauWallDir(iPoint, 0, ival);
 }
 
 passivedouble CDriver::GetTauWall_WMLES(unsigned short iMarker, unsigned long iVertex){
-
-   return solver_container[ZONE_0][INST_0][MESH_0][FLOW_SOL]->GetTauWall_WMLES(iMarker,iVertex);   
+   //return solver_container[ZONE_0][INST_0][MESH_0][FLOW_SOL]->GetTauWall_WMLES(iMarker,iVertex);   
+   unsigned long iPoint = geometry_container[ZONE_0][INST_0][MESH_0]->vertex[iMarker][iVertex]->GetNode();
+   return solver_container[ZONE_0][INST_0][MESH_0][FLOW_SOL]->GetNodes()->GetTauWallDir(iPoint, 0);
 }
 
 passivedouble CDriver::GetVelOffWall(unsigned short iMarker, unsigned long iVertex, unsigned short iDim){ 
