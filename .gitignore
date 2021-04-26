@@ -86,3 +86,12 @@ Mercurial
 
 # Ignore build folder
 build/
+
+# ninja binary (build system)
+ninja
+
+# CLion stuff
+.idea/
+CMakeLists.txt
+cmake-build-debug/
+main.cpp
