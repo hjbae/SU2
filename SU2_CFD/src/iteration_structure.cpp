@@ -705,13 +705,8 @@ void CFluidIteration::SetWind_GustField(CConfig *config, CGeometry **geometry, C
   // The source term itself is implemented in the class CSourceWindGust
 
   if (rank == MASTER_NODE)
-    cout << endl << "Running simulation with a Wind Gust." << endl;
-  unsigned short iDim, nDim = geometry[MESH_0]->GetnDim(); //We assume nDim = 2
-  if (nDim != 2) {
-    if (rank == MASTER_NODE) {
-      cout << endl << "WARNING - Wind Gust capability is only verified for 2 dimensional simulations." << endl;
-    }
-  }
+      cout << "[SetWind_GustField]:Began..." << endl;
+  unsigned short iDim, nDim = geometry[MESH_0]->GetnDim();
 
   /*--- Gust Parameters from config ---*/
   unsigned short Gust_Type = config->GetGust_Type();
@@ -727,14 +722,14 @@ void CFluidIteration::SetWind_GustField(CConfig *config, CGeometry **geometry, C
   unsigned long iPoint;
   unsigned short iMGlevel, nMGlevel = config->GetnMGLevels();
 
-  su2double x, y, x_gust, dgust_dx, dgust_dy, dgust_dt;
+  su2double x, y, z, x_gust, dgust_dx, dgust_dy, dgust_dz, dgust_dt;
   su2double *Gust, *GridVel, *NewGridVel, *GustDer;
 
   su2double Physical_dt = config->GetDelta_UnstTime();
   unsigned long TimeIter = config->GetTimeIter();
   su2double Physical_t = TimeIter*Physical_dt;
 
-  su2double Uinf = solver[MESH_0][FLOW_SOL]->GetVelocity_Inf(0); // Assumption gust moves at infinity velocity
+  su2double Uinf = solver[MESH_0][FLOW_SOL]->GetVelocity_Inf(0); // Assumption gust moves at freestream velocity
 
   Gust = new su2double [nDim];
   NewGridVel = new su2double [nDim];
@@ -743,8 +738,8 @@ void CFluidIteration::SetWind_GustField(CConfig *config, CGeometry **geometry, C
     NewGridVel[iDim] = 0.0;
   }
 
-  GustDer = new su2double [3];
-  for (unsigned short i = 0; i < 3; i++) {
+  GustDer = new su2double [4];
+  for (unsigned short i = 0; i < 4; i++) {
     GustDer[i] = 0.0;
   }
 
@@ -755,7 +750,7 @@ void CFluidIteration::SetWind_GustField(CConfig *config, CGeometry **geometry, C
     InitializeVortexDistribution(nVortex, x0, y0, vort_strenth, r_core);
   }
 
-  /*--- Check to make sure gust lenght is not zero or negative (vortex gust doesn't use this). ---*/
+  /*--- Check to make sure gust length is not zero or negative (vortex gust doesn't use this). ---*/
   if (L <= 0.0 && Gust_Type != VORTEX) {
     SU2_MPI::Error("The gust length needs to be positive", CURRENT_FUNCTION);
   }
@@ -777,14 +772,16 @@ void CFluidIteration::SetWind_GustField(CConfig *config, CGeometry **geometry, C
       /*--- initialize the gust and derivatives to zero everywhere ---*/
 
       for (iDim = 0; iDim < nDim; iDim++) {Gust[iDim]=0.0;}
-      dgust_dx = 0.0; dgust_dy = 0.0; dgust_dt = 0.0;
+      dgust_dx = 0.0; dgust_dy = 0.0; dgust_dz = 0.0; dgust_dt = 0.0;
 
       /*--- Begin applying the gust ---*/
 
       if (Physical_t >= tbegin) {
 
+        // Y becomes Z in 3D
         x = geometry[iMGlevel]->node[iPoint]->GetCoord()[0]; // x-location of the node.
         y = geometry[iMGlevel]->node[iPoint]->GetCoord()[1]; // y-location of the node.
+        z = geometry[iMGlevel]->node[iPoint]->GetCoord()[2]; // z-location of the node.
 
         // Gust coordinate
         x_gust = (x - xbegin - Uinf*(Physical_t-tbegin))/L;
@@ -859,7 +856,8 @@ void CFluidIteration::SetWind_GustField(CConfig *config, CGeometry **geometry, C
 
       GustDer[0] = dgust_dx;
       GustDer[1] = dgust_dy;
-      GustDer[2] = dgust_dt;
+      GustDer[2] = dgust_dz;
+      GustDer[3] = dgust_dt;
 
       solver[iMGlevel][FLOW_SOL]->GetNodes()->SetWindGust(iPoint, Gust);
       solver[iMGlevel][FLOW_SOL]->GetNodes()->SetWindGustDer(iPoint, GustDer);
@@ -875,11 +873,11 @@ void CFluidIteration::SetWind_GustField(CConfig *config, CGeometry **geometry, C
 
     }
   }
-
+  if (rank == MASTER_NODE)
+    cout << "[SetWind_GustField]: Successfully completed!" << endl;
   delete [] Gust;
   delete [] GustDer;
   delete [] NewGridVel;
-
 }
 
 void CFluidIteration::InitializeVortexDistribution(unsigned long &nVortex, vector<su2double>& x0, vector<su2double>& y0, vector<su2double>& vort_strength, vector<su2double>& r_core) {

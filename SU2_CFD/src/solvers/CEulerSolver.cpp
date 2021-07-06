@@ -3477,6 +3477,9 @@ void CEulerSolver::LowMachPrimitiveCorrection(CFluidModel *fluidModel, unsigned 
 void CEulerSolver::Source_Residual(CGeometry *geometry, CSolver **solver_container,
                                    CNumerics **numerics_container, CConfig *config, unsigned short iMesh) {
 
+  if (SU2_MPI::GetRank()==MASTER_NODE)
+    cout << "[CEulerSolver::Source_Residual]: Began..." << endl;
+
   const bool implicit         = (config->GetKind_TimeIntScheme_Flow() == EULER_IMPLICIT);
   const bool rotating_frame   = config->GetRotating_Frame();
   const bool axisymmetric     = config->GetAxisymmetric();
@@ -3611,7 +3614,8 @@ void CEulerSolver::Source_Residual(CGeometry *geometry, CSolver **solver_contain
   }
 
   if (windgust) {
-
+    if (SU2_MPI::GetRank()==MASTER_NODE)
+      cout << "[CEulerSolver::Source_Residual]: windgust case..." << endl;
     /*--- Loop over all points ---*/
     SU2_OMP_FOR_DYN(omp_chunk_size)
     for (iPoint = 0; iPoint < nPointDomain; iPoint++) {
@@ -3638,6 +3642,8 @@ void CEulerSolver::Source_Residual(CGeometry *geometry, CSolver **solver_contain
       if (implicit) Jacobian.AddBlock2Diag(iPoint, residual.jacobian_i);
 
     }
+    if (SU2_MPI::GetRank()==MASTER_NODE)
+      cout << "[CEulerSolver::Source_Residual]: windgust case...done! " << endl;
   }
 
   /*--- Check if a verification solution is to be computed. ---*/
@@ -11387,7 +11393,8 @@ void CEulerSolver::SetResidual_DualTime(CGeometry *geometry, CSolver **solver_co
                                         unsigned short iRKStep, unsigned short iMesh, unsigned short RunTime_EqSystem) {
 
   /*--- Local variables ---*/
-
+  if (SU2_MPI::GetRank()==MASTER_NODE)
+    cout << "[CEulerSolver::SetResidual_DualTime]: began..." << endl;
   unsigned short iVar, iMarker, iDim, iNeigh;
   unsigned long iPoint, jPoint, iEdge, iVertex;
 
@@ -11407,7 +11414,8 @@ void CEulerSolver::SetResidual_DualTime(CGeometry *geometry, CSolver **solver_co
   /*--- Compute the dual time-stepping source term for static meshes ---*/
 
   if (!dynamic_grid) {
-
+    if (SU2_MPI::GetRank()==MASTER_NODE)
+      cout << "[CEulerSolver::SetResidual_DualTime]: static grid..." << endl;
     /*--- Loop over all nodes (excluding halos) ---*/
 
     SU2_OMP_FOR_STAT(omp_chunk_size)
@@ -11447,7 +11455,8 @@ void CEulerSolver::SetResidual_DualTime(CGeometry *geometry, CSolver **solver_co
   }
 
   else {
-
+    if (SU2_MPI::GetRank()==MASTER_NODE)
+      cout << "[CEulerSolver::SetResidual_DualTime]: dynamic grid..." << endl;
     /*--- For unsteady flows on dynamic meshes (rigidly transforming or
      dynamically deforming), the Geometric Conservation Law (GCL) should be
      satisfied in conjunction with the ALE formulation of the governing
@@ -11456,34 +11465,56 @@ void CEulerSolver::SetResidual_DualTime(CGeometry *geometry, CSolver **solver_co
      we will loop over the edges and boundaries to compute the GCL component
      of the dual time source term that depends on grid velocities. ---*/
 
+    if (SU2_MPI::GetRank()==MASTER_NODE)
+      cout << "[CEulerSolver::SetResidual_DualTime]: compute GCL..." << endl;
     SU2_OMP_FOR_STAT(omp_chunk_size)
     for (iPoint = 0; iPoint < nPointDomain; ++iPoint) {
 
       GridVel_i = geometry->node[iPoint]->GetGridVel();
       U_time_n = nodes->GetSolution_time_n(iPoint);
 
+      if (SU2_MPI::GetRank()==MASTER_NODE)
+        cout << "[CEulerSolver::SetResidual_DualTime]: step1..." << endl;
+
       for (iNeigh = 0; iNeigh < geometry->node[iPoint]->GetnNeighbor(); iNeigh++) {
 
         iEdge = geometry->node[iPoint]->GetEdge(iNeigh);
         Normal = geometry->edge[iEdge]->GetNormal();
 
+        if (SU2_MPI::GetRank()==MASTER_NODE)
+          cout << "[CEulerSolver::SetResidual_DualTime]: step2..." << endl;
+
         jPoint = geometry->node[iPoint]->GetPoint(iNeigh);
         GridVel_j = geometry->node[jPoint]->GetGridVel();
 
+        if (SU2_MPI::GetRank()==MASTER_NODE)
+          cout << "[CEulerSolver::SetResidual_DualTime]: step3..." << endl;
+
         /*--- Determine whether to consider the normal outward or inward. ---*/
         su2double dir = (geometry->edge[iEdge]->GetNode(0) == iPoint)? 0.5 : -0.5;
+
+        if (SU2_MPI::GetRank()==MASTER_NODE)
+          cout << "[CEulerSolver::SetResidual_DualTime]: step4..." << endl;
 
         Residual_GCL = 0.0;
         for (iDim = 0; iDim < nDim; iDim++)
           Residual_GCL += dir*(GridVel_i[iDim]+GridVel_j[iDim])*Normal[iDim];
 
+        if (SU2_MPI::GetRank()==MASTER_NODE)
+          cout << "[CEulerSolver::SetResidual_DualTime]: step5..." << endl;
+
         for (iVar = 0; iVar < nVar; iVar++)
           LinSysRes(iPoint,iVar) += U_time_n[iVar]*Residual_GCL;
+
+        if (SU2_MPI::GetRank()==MASTER_NODE)
+          cout << "[CEulerSolver::SetResidual_DualTime]: step6..." << endl;
+
       }
     }
 
     /*--- Loop over the boundary edges ---*/
-
+    if (SU2_MPI::GetRank()==MASTER_NODE)
+      cout << "[CEulerSolver::SetResidual_DualTime]: loop over boundary edges..." << endl;
     for (iMarker = 0; iMarker < geometry->GetnMarker(); iMarker++) {
       if ((config->GetMarker_All_KindBC(iMarker) != INTERNAL_BOUNDARY)  &&
           (config->GetMarker_All_KindBC(iMarker) != PERIODIC_BOUNDARY)) {
@@ -11518,7 +11549,8 @@ void CEulerSolver::SetResidual_DualTime(CGeometry *geometry, CSolver **solver_co
 
     /*--- Loop over all nodes (excluding halos) to compute the remainder
      of the dual time-stepping source term. ---*/
-
+    if (SU2_MPI::GetRank()==MASTER_NODE)
+      cout << "[CEulerSolver::SetResidual_DualTime]: loop over nodes to compute remainder..." << endl;
     SU2_OMP_FOR_STAT(omp_chunk_size)
     for (iPoint = 0; iPoint < nPointDomain; iPoint++) {
 

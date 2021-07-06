@@ -50,7 +50,8 @@ void CIntegration::Space_Integration(CGeometry *geometry,
                     (config->GetTime_Marching() == DT_STEPPING_2ND));
 
   /*--- Compute inviscid residuals ---*/
-
+  if (SU2_MPI::GetRank()==MASTER_NODE)
+    cout << "[CIntegration::Space_Integration]: inviscid residuals " << endl;
   switch (config->GetKind_ConvNumScheme()) {
     case SPACE_CENTERED:
       solver_container[MainSolver]->Centered_Residual(geometry, solver_container, numerics, config, iMesh, iRKStep);
@@ -64,18 +65,23 @@ void CIntegration::Space_Integration(CGeometry *geometry,
   }
 
   /*--- Compute viscous residuals ---*/
-
+  if (SU2_MPI::GetRank()==MASTER_NODE)
+    cout << "[CIntegration::Space_Integration]: viscous residual " << endl;
   solver_container[MainSolver]->Viscous_Residual(geometry, solver_container, numerics, config, iMesh, iRKStep);
 
   /*--- Compute source term residuals ---*/
-
+  if (SU2_MPI::GetRank()==MASTER_NODE)
+    cout << "[CIntegration::Space_Integration]: source residual " << endl;
   solver_container[MainSolver]->Source_Residual(geometry, solver_container, numerics, config, iMesh);
 
   /*--- Add viscous and convective residuals, and compute the Dual Time Source term ---*/
 
   if (dual_time)
+    if (SU2_MPI::GetRank()==MASTER_NODE)
+      cout << "[CIntegration::Space_Integration]: SetResidual_DualTime" << endl;
     solver_container[MainSolver]->SetResidual_DualTime(geometry, solver_container, config, iRKStep, iMesh, RunTime_EqSystem);
-
+  if (SU2_MPI::GetRank()==MASTER_NODE)
+    cout << "[CIntegration::Space_Integration]: SetResidual_DualTime..Done!" << endl;
   /// TODO: No boundary condition supports hybrid parallelism yet, master thread does all the work.
 
   SU2_OMP_MASTER
